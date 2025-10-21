@@ -3,15 +3,17 @@ export default {
     const url = new URL(request.url);
     const parts = url.pathname.split("/").filter(Boolean);
 
-    // Ambil width & height dari path (/400/300)
+    // Ambil ukuran dari path (/400/300)
     const width = parseInt(parts[0]) || 400;
     const height = parseInt(parts[1]) || 300;
 
-    // Ambil query parameter opsional (blur, gray)
+    // Query opsional
     const blur = parseInt(url.searchParams.get("blur")) || 0;
     const gray = url.searchParams.has("gray");
+    const seed = url.searchParams.get("seed") || null;
+    const isJSON = url.searchParams.has("json");
 
-    // Daftar gambar dari GitHub kamu
+    // Daftar gambar dari repositori GitHub kamu
     const images = [
       "https://raw.githubusercontent.com/xtcodes/random-image/refs/heads/main/images/img1.jpeg",
       "https://raw.githubusercontent.com/xtcodes/random-image/refs/heads/main/images/img2.jpeg",
@@ -19,11 +21,35 @@ export default {
       "https://raw.githubusercontent.com/xtcodes/random-image/refs/heads/main/images/img4.jpeg"
     ];
 
-    // Pilih gambar acak
-    const randomImage = images[Math.floor(Math.random() * images.length)];
+    // Pilih gambar acak (atau berdasarkan seed)
+    let randomImage;
+    if (seed) {
+      const index = Math.abs(hashCode(seed)) % images.length;
+      randomImage = images[index];
+    } else {
+      randomImage = images[Math.floor(Math.random() * images.length)];
+    }
+
+    // Jika JSON API diminta (contoh: ?json)
+    if (isJSON) {
+      const link = `${url.origin}/${width}/${height}${gray ? "?gray" : ""}${blur ? "&blur=" + blur : ""}`;
+      const data = {
+        image: randomImage,
+        resized: link,
+        width,
+        height,
+        blur,
+        grayscale: gray,
+        seed: seed || null,
+        timestamp: new Date().toISOString()
+      };
+      return new Response(JSON.stringify(data, null, 2), {
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+      });
+    }
 
     try {
-      // Gunakan fitur Image Resizing bawaan Cloudflare
+      // Gunakan Image Resizing dari Cloudflare
       const requestImage = new Request(randomImage, {
         cf: {
           image: {
@@ -40,20 +66,39 @@ export default {
       const response = await fetch(requestImage);
       if (!response.ok) throw new Error("Image fetch failed");
 
+      // Header anti-cache supaya gambar selalu berubah
       const headers = new Headers(response.headers);
-      headers.set("Cache-Control", "public, max-age=3600");
+      headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+      headers.set("Pragma", "no-cache");
+      headers.set("Expires", "0");
+      headers.set("Surrogate-Control", "no-store");
       headers.set("Content-Type", "image/jpeg");
 
       return new Response(response.body, { headers });
     } catch (e) {
-      // Fallback: gambar warna acak gradasi dengan efek fade
+      // Fallback warna acak fade
       const fallback = await createFallbackImage(width, height);
-      return new Response(fallback, { headers: { "Content-Type": "image/svg+xml" } });
+      return new Response(fallback, {
+        headers: {
+          "Content-Type": "image/svg+xml",
+          "Cache-Control": "no-store"
+        }
+      });
     }
   }
 };
 
-// Membuat fallback gambar warna acak + efek fade-out lembut
+// 🔹 Fungsi hashCode untuk seed stabil
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash;
+}
+
+// 🔹 Fallback warna acak fade
 async function createFallbackImage(width, height) {
   const randomColor = () => Math.floor(Math.random() * 256);
   const r = randomColor();
@@ -73,6 +118,5 @@ async function createFallbackImage(width, height) {
       </rect>
     </svg>
   `;
-
   return svg;
 }
