@@ -13,10 +13,10 @@ export default {
 
     // Daftar gambar dari GitHub kamu
     const images = [
-      "https://raw.githubusercontent.com/verdonks/twibbon-gallery/main/img1.jpg",
-      "https://raw.githubusercontent.com/verdonks/twibbon-gallery/main/img2.jpg",
-      "https://raw.githubusercontent.com/verdonks/twibbon-gallery/main/img3.jpg",
-      "https://raw.githubusercontent.com/verdonks/twibbon-gallery/main/img4.jpg"
+      "https://raw.githubusercontent.com/xtcodes/random-image/refs/heads/main/images/img1.jpeg",
+      "https://raw.githubusercontent.com/xtcodes/random-image/refs/heads/main/images/img2.jpeg",
+      "https://raw.githubusercontent.com/xtcodes/random-image/refs/heads/main/images/img3.jpeg",
+      "https://raw.githubusercontent.com/xtcodes/random-image/refs/heads/main/images/img4.jpeg"
     ];
 
     // Pilih gambar acak
