@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Random Image Dinamis</title>
+<style>
+  body {
+    text-align: center;
+    background: #f0f0f0;
+    padding: 30px;
+    font-family: Arial;
+  }
+  h1 { color: #333; margin-bottom: 20px; }
+  img {
+    width: 90%;
+    max-width: 400px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  }
+</style>
+</head>
+<body>
+  <h1>🎲 Gambar Acak Dinamis</h1>
+  <img id="randomImage" alt="Gambar acak">
+
+  <script>
+    // Ambil JSON daftar gambar
+    fetch("images.json")
+      .then(response => response.json())
+      .then(images => {
+        const rand = images[Math.floor(Math.random() * images.length)];
+        const img = document.getElementById("randomImage");
+        img.src = rand + "?v=" + new Date().getTime();
+      })
+      .catch(err => console.error("Gagal memuat gambar:", err));
+  </script>
+</body>
+</html>
